@@ -1,14 +1,220 @@
 <!DOCTYPE html>
 <html>
+<head>
 
-	<head>
-    
-        <title>Twitter trends test</title>
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            
-	</head>
-    
+<meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.0/jquery.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+  <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+
+	<title></title>
+	<style type="text/css">
+		.jumbotron{
+			padding-top: 0px;
+		}
+		#bottom{
+			
+			border-bottom: 2px solid #66ccff;
+		}
+  .icon{
+  	font-size: 2em;
+  	color:#66ccff;
+  }
+  .navbar-default{
+  	background-color: #d35400;
+  }
+
+
+	</style>
+</head>
 <body>
-<h1>Here you go!</h1>
+
+<div class="row">
+<div class="col-md-3">
+<div class="jumbotron">
+<nav class="navbar navbar-default">
+  <div class="container-fluid">
+    <div class="navbar-header">
+      <a class="navbar-brand" href="#"><h4 style="color: white;text-align: center;"> Select Countries</h4></a>
+    </div>
+  </div>
+</nav>
+<div class="col-md-offset-2">
+<h5 style="color: #66ccff">Select country</h5>
+<div class="icon">
+ <span class="icon-globe">
+    </span></div>
+<div id="bottom">
+</div>
+<select id="country_one">
+  <option value="Select">Select</option>
+</select>
+<h5 style="color: #66ccff">Select country</h5>
+ <div class="icon"><span class="icon-globe">
+    </span></div>
+<div id="bottom">
+</div>
+<select id="country_two">
+  <option value="Select">Select</option>
+</select>
+</div><br><br>
+<nav class="navbar navbar-default">
+  <div class="container-fluid">
+    <div class="navbar-header">
+      <a class="navbar-brand" href="#"><h4 style="color: white;text-align: center;">Common trends</h4></a>
+      <div id='trends'></div>
+    </div>
+  </div>
+</nav>
+</div>
+</div>
+<div class="col-md-9">
+<div id="pi-chart"></div>
+
+</div>
+</div>
+<script type="text/javascript">
+//Function to calculate common trends betwee two countries
+function objSame(array1, array2) {
+	if(array1.length < 1){    // if only 1 country selected return that
+		return array2
+	}
+	if(array2.length < 1){   // if only 1 country selected return that
+		return array1
+	}
+	if(array1==array2)        // if both country same
+		return array2
+    var resultArray = []
+    array2.forEach(function(destObj) {
+        var check = array1.some(function(origObj) {           // compare and push if same
+            if(origObj.name == destObj.name) return true
+        })
+        if(check) {
+            destObj.desc = 'Same in both'
+            resultArray.push(destObj)
+        }
+    })
+    array1.forEach(function(destObj) {          // compare and push if same
+        var check = array2.some(function(origObj) {
+            if(origObj.name == destObj.name) return true
+        })
+        if(check) {
+            destObj.desc = 'Same in both'
+            resultArray.push(destObj)
+        }
+    })
+    return resultArray
+}
+  var url_country="/countries/";
+	$.ajax({
+            type: 'GET',
+            url: url_country,
+            
+            success: function(data){
+            
+
+          	for(var i=0;i<data.countries.length;i++){
+          		
+    			$('#country_one').append('<option value="'+data.countries[i]+'">'+data.countries[i]+'</option>');
+    			$('#country_two').append('<option value="'+data.countries[i]+'">'+data.countries[i]+'</option>');        
+  			}
+            },
+            error: function(data){
+                    alert("error");
+                    alert("ajax error occured "+data);
+            }
+        }); 
+	var trend_one = [];
+	var trend_two = [];
+	var diff = [];
+
+	// country 1 on change display trends and graph
+$('select#country_one').on('change', function() {
+$('#trends').text("");
+  var url_trends="/countries/"+this.value+"/trends/";
+	$.ajax({
+            type: 'GET',
+            url: url_trends,
+            
+            success: function(data){
+            	
+            	for(var i=0;i<data.trends.length;i++){
+            		
+            		trend_one.push(data.trends[i]);
+            		
+            	}
+            	diff=objSame(trend_one, trend_two)  // take the common trends of both countries
+         
+            	for(var i=0;i<diff.length;i++){
+            			$('#trends').append('<li><a href='+diff[i].url+'>'+diff[i].name+'</option>');
+            		}
+            		chart(diff);   //display chart based the data 
+            },
+            error: function(data){
+                    alert("error");
+                    alert("ajax error occured "+data);
+            }
+        });
+
+});
+
+// country 2 on change display trends and graph
+$('select#country_two').on('change', function() {
+$('#trends').text("");
+  var url_trends="/countries/"+this.value+"/trends/";
+	$.ajax({
+            type: 'GET',
+            url: url_trends,
+            
+            success: function(data){
+				for(var i=0;i<data.trends.length;i++){
+					trend_two.push(data.trends[i]);
+				}
+            		diff=objSame(trend_two, trend_one)    // take the common trends of both countries
+            	
+            		for(var i=0;i<diff.length;i++){
+            			$('#trends').append('<li><a href='+diff[i].url+'>'+diff[i].name+'</option>');
+            		}
+            		chart(diff);   //display chart based the data 
+			},
+            error: function(data){
+                    alert("error");
+                    alert("ajax error occured "+data);
+            }
+        });
+});
+
+//Google chart , take diff the data to dispaly as parameter
+function chart(diff){          
+	google.charts.load('current', {'packages':['corechart']});
+    				google.charts.setOnLoadCallback(drawChart);
+    						function drawChart() {
+
+      							var chart_data = new Array();
+     							chart_data[0] = ['trend', ' power'];
+     							 for (var i = 0; i < diff.length; i++){
+       								 chart_data[i+1] = [diff[i].name, diff[i].name.length];
+     							 }
+
+     							 var data = google.visualization.arrayToDataTable(chart_data, false);
+      							var options = {
+       							title: 'Trend weight contribution'
+      						};
+
+      				var chart = new google.visualization.PieChart(document.getElementById('pi-chart'));
+
+      				chart.draw(data, {
+  						width: 500,
+ 						height: 340,
+  						title: 'Trend weight contribution',
+ 						is3D: false
+					});
+	}
+
+ }  
+</script>
+
 </body>
 </html>
